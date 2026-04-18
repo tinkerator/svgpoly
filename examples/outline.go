@@ -17,12 +17,13 @@ import (
 )
 
 var (
-	src    = flag.String("svg", "", "input SVG file")
-	dest   = flag.String("dest", "", "output gnuplot script filename")
-	debug  = flag.Bool("debug", false, "enable more debugging output")
-	before = flag.Bool("before", false, "show polygons before creating union")
-	after  = flag.Bool("after", true, "show polygons after creating union")
-	scribe = flag.Float64("scribe", 0.1, "pen scribing size (detail for rounding circles)")
+	src     = flag.String("svg", "", "input SVG file")
+	dest    = flag.String("dest", "", "output gnuplot script filename")
+	debug   = flag.Bool("debug", false, "enable more debugging output")
+	before  = flag.Bool("before", false, "show polygons before creating union")
+	after   = flag.Bool("after", true, "show polygons after creating union")
+	scribe  = flag.Float64("scribe", 0.1, "pen scribing size (detail for rounding circles)")
+	inflate = flag.Bool("inflate", false, "inflate outlines by --scribe value / 2.")
 )
 
 // plotData outputs the polygon data into a gnuplot format.
@@ -91,6 +92,13 @@ func main() {
 		plotData(out, cuts)
 	}
 	if haveUnion {
+		if *inflate {
+			for i := range shapes.P {
+				if err := shapes.Inflate(i, *scribe/2); err != nil {
+					log.Fatalf("Failed to inflate shape %d: %v", i, err)
+				}
+			}
+		}
 		shapes.Union()
 		plotData(out, shapes)
 	}

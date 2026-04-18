@@ -45,6 +45,7 @@ func trace(dis []*svger.DrawingInstruction, scribe float64, colors ...string) (s
 	cols := make(map[string]bool)
 	if len(colors) == 0 {
 		cols["#000000"] = true
+		cols["black"] = true
 	} else {
 		for _, color := range colors {
 			cols[color] = true
@@ -70,8 +71,8 @@ func trace(dis []*svger.DrawingInstruction, scribe float64, colors ...string) (s
 					} // ignore other color choices (as painted holes)
 					break
 				}
-				// No substance
 				if a.StrokeWidth == nil || *a.StrokeWidth == 0 {
+					// No substance
 					break
 				}
 				// "i != base" because the .Kind values are different...
@@ -99,8 +100,12 @@ func trace(dis []*svger.DrawingInstruction, scribe float64, colors ...string) (s
 			base = i + 1
 		}
 	}
-	shapes.Reorder()
-	cuts.Reorder()
+	if shapes != nil {
+		shapes.Reorder()
+	}
+	if cuts != nil {
+		cuts.Reorder()
+	}
 	return
 }
 

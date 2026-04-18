@@ -42,6 +42,19 @@ Which should render this image:
 
 <img src="before-not-after.png" width="80%" alt="More raw SVG input"/>
 
+Finally, we can inflate the polygons by half of the `--scribe` width
+(`--scribe` is an indication of how thick the minimal line is when
+rendering), simulating where we would actually cut copper, say, to
+leave a polygon islands equal to their intended shapes.
+
+```
+$ go run examples/outline.go --svg examples/test.svg --before --scribe 0.3 --inflate | gnuplot -p
+```
+
+Which should render this image:
+
+<img src="before-and-inflate.png" width="80%" alt="Inflated union"/>
+
 ## License info
 
 The `svgpoly` package is distributed with the same BSD 3-clause
