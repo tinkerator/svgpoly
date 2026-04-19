@@ -14,6 +14,7 @@ the outline generation of overlapping polygons.
 ## How to use
 
 First confirm `gnuplot` is available on your system. Try:
+
 ```
 $ gnuplot --version
 ```
@@ -24,12 +25,12 @@ Debian: `sudo apt install gnuplot`). Then:
 ```
 $ git clone https://github.com/tinkerator/svgpoly.git
 $ cd svgpoly
-$ go run examples/outline.go -- --svg examples/test.svg | gnuplot -p
+$ go run examples/outline.go -- --svg examples/test.svg --hatch 0.3 | gnuplot -p
 ```
 
 Which should render this processed (union) image:
 
-<img src="with-union.png" width="80%" alt="polygon outlines of shapes"/>
+<img src="with-union-hatched.png" width="80%" alt="polygon outlines of shapes with hatch fill"/>
 
 This is more faithful to the raw input SVG image in terms of the
 overlapping polygons.
@@ -42,18 +43,32 @@ Which should render this image:
 
 <img src="before-not-after.png" width="80%" alt="More raw SVG input"/>
 
-Finally, we can inflate the polygons by half of the `--scribe` width
-(`--scribe` is an indication of how thick the minimal line is when
-rendering), simulating where we would actually cut copper, say, to
-leave a polygon islands equal to their intended shapes.
+We can inflate the polygons by the value specified with the `--inflate` option.
 
 ```
-$ go run examples/outline.go --svg examples/test.svg --before --scribe 0.3 --inflate | gnuplot -p
+$ go run examples/outline.go --svg examples/test.svg --before --inflate 0.3 | gnuplot -p
 ```
 
 Which should render this image:
 
 <img src="before-and-inflate.png" width="80%" alt="Inflated union"/>
+
+Finally, you can output `*polygons.Shapes` in the form of an SVG. The
+SVG follows the conventions that `.Hole`s appear white and
+non-`.Hole`s as blue:
+
+```
+$ go run examples/outline.go --svg examples/test.svg --osvg output.svg --hatch 0.3
+```
+
+Which renders as follows:
+
+<img src="ref-output.svg" width="80%" alt="Inflated union with hatch"/>
+
+Note how this output is flipped vertically from the `gnuplot`
+output. This SVG output is faithful to the input format. The `gnuplot`
+output is not. This is because the native input data is from an SVG
+which has the opposite Y coordinate direction as `gnuplot`.
 
 ## License info
 

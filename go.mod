@@ -5,7 +5,8 @@ go 1.25.5
 require (
 	zappem.net/pub/graphics/polymark v0.6.9
 	zappem.net/pub/graphics/svger v0.3.2
-	zappem.net/pub/math/polygon v0.9.15
+	zappem.net/pub/graphics/svgof v0.5.3
+	zappem.net/pub/math/polygon v0.9.16
 )
 
 require (

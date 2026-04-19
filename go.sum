@@ -4,7 +4,9 @@ zappem.net/pub/graphics/polymark v0.6.9 h1:yoeq1UPuSuLCeyxQ5RSuKTaLYpEpGYL9T7wx8
 zappem.net/pub/graphics/polymark v0.6.9/go.mod h1:tGN49AgmvbUFFItRaDDSOW1jG7IyTWzdeNU1da/eSv4=
 zappem.net/pub/graphics/svger v0.3.2 h1:TttiH95x7V4q2AaE7UuoKynigJpJsIxgZ1Mud9UOSkI=
 zappem.net/pub/graphics/svger v0.3.2/go.mod h1:NI68dkBGoZ89A6zia2bzy4qHj6EsPx5poVpP82kkItc=
+zappem.net/pub/graphics/svgof v0.5.3 h1:ZieHZSBWP6WknHruP7QP32e+2MmkeaxYBSqj4DARsKE=
+zappem.net/pub/graphics/svgof v0.5.3/go.mod h1:GKUUTS0rjonAAYr0LK7RO4aV42vGg6rxL3DfBKP3Wuc=
 zappem.net/pub/math/geom v0.6.1 h1:1sRrUtBy3MOLllcmgozF3qDRo786KjPjbAo0CBvNKGI=
 zappem.net/pub/math/geom v0.6.1/go.mod h1:J278I+LwpHrPJsQVEGq8AEi6wdAVMrK7VUsvQ+vbGKM=
-zappem.net/pub/math/polygon v0.9.15 h1:Aq0Dj3ilodxfXlDAQUtou+190JJzgC3qdM/Ww2Fxr8M=
-zappem.net/pub/math/polygon v0.9.15/go.mod h1:u6/3+TRLWGqqVIgArTaWPpZQDgg4O6YP51AUjjMYUG8=
+zappem.net/pub/math/polygon v0.9.16 h1:52Ese0bqjS8FT5pQ8h+RxiFldAqKTftpdchQWH033uI=
+zappem.net/pub/math/polygon v0.9.16/go.mod h1:u6/3+TRLWGqqVIgArTaWPpZQDgg4O6YP51AUjjMYUG8=

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strings"
 
@@ -19,15 +20,18 @@ import (
 var (
 	src     = flag.String("svg", "", "input SVG file")
 	dest    = flag.String("dest", "", "output gnuplot script filename")
+	oSVG    = flag.String("osvg", "", "output representation in SVG format")
 	debug   = flag.Bool("debug", false, "enable more debugging output")
 	before  = flag.Bool("before", false, "show polygons before creating union")
 	after   = flag.Bool("after", true, "show polygons after creating union")
-	scribe  = flag.Float64("scribe", 0.1, "pen scribing size (detail for rounding circles)")
-	inflate = flag.Bool("inflate", false, "inflate outlines by --scribe value / 2.")
+	scribe  = flag.Float64("scribe", 0.1, "pen scribing size (for rounding circles and --osvg)")
+	inflate = flag.Float64("inflate", 0.0, "inflate outlines by this value")
+	hatch   = flag.Float64("hatch", 0.0, "hatch the polygons with this spacing")
+	hAngle  = flag.Float64("hatch-angle", 45.0, "hatch pattern is at this angle")
 )
 
 // plotData outputs the polygon data into a gnuplot format.
-func plotData(out io.Writer, s *polygon.Shapes) {
+func plotData(out io.Writer, s *polygon.Shapes, lines ...polygon.Line) {
 	if s == nil {
 		log.Fatal("Unable to plot empty shapes")
 	}
@@ -41,6 +45,9 @@ func plotData(out io.Writer, s *polygon.Shapes) {
 			fmt.Fprintln(out)
 		}
 	}
+	for _, line := range lines {
+		fmt.Fprintf(out, "\n%g %g\n%g %g\n", line.From.X, line.From.Y, line.To.X, line.To.Y)
+	}
 	fmt.Fprintln(out, "e")
 }
 
@@ -53,7 +60,7 @@ func main() {
 	// cuts are outlines with no substance.
 	shapes, cuts, err := svgpoly.LoadSVG(*src, *scribe)
 	if err != nil {
-		log.Fatalf("Failed to load --svg=%q: %v", err)
+		log.Fatalf("Failed to load --svg=%q: %v", *src, err)
 	}
 
 	haveShapes := *before && shapes != nil && len(shapes.P) != 0
@@ -82,24 +89,60 @@ func main() {
 			log.Fatalf("Unable to generate output %q: %v", *dest, err)
 		}
 		defer out.Close()
+	} else if *oSVG != "" {
+		out, err = os.Create(*oSVG)
+		if err != nil {
+			log.Fatalf("Unable to generate SVG output %q: %v", *oSVG, err)
+		}
+		defer out.Close()
 	}
 
-	fmt.Fprintf(out, "plot %s\n", strings.Join(prefix, ", \\\n     "))
-	if haveShapes {
-		plotData(out, shapes)
+	if *oSVG == "" {
+		fmt.Fprintf(out, "plot %s\n", strings.Join(prefix, ", \\\n     "))
+		if haveShapes {
+			plotData(out, shapes)
+		}
+		if haveCuts {
+			plotData(out, cuts)
+		}
 	}
-	if haveCuts {
-		plotData(out, cuts)
-	}
+
 	if haveUnion {
-		if *inflate {
+		shapes.Union()
+		if *inflate != 0 {
 			for i := range shapes.P {
-				if err := shapes.Inflate(i, *scribe/2); err != nil {
+				if err := shapes.Inflate(i, *inflate); err != nil {
 					log.Fatalf("Failed to inflate shape %d: %v", i, err)
 				}
 			}
 		}
-		shapes.Union()
-		plotData(out, shapes)
+	}
+
+	var lines []polygon.Line
+	if *hatch != 0 {
+		var holes []int
+		for i, s := range shapes.P {
+			if s.Hole {
+				holes = append(holes, i)
+			}
+		}
+		for i, s := range shapes.P {
+			if s.Hole {
+				continue
+			}
+			stripes, err := shapes.Hatch(i, *scribe, *hatch, *hatch/2, *hAngle/180*math.Pi, holes...)
+			if err != nil {
+				log.Fatalf("failed to hatch shape[%d] with these holes: %v", i, holes)
+			}
+			lines = append(lines, stripes...)
+		}
+	}
+
+	if *oSVG != "" {
+		if err := svgpoly.SVG(shapes, out, *scribe, lines); err != nil {
+			log.Fatalf("Failed to render SVG output: %v", err)
+		}
+	} else {
+		plotData(out, shapes, lines...)
 	}
 }
