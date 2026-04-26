@@ -38,15 +38,15 @@ func plotData(out io.Writer, s *polygon.Shapes, lines ...polygon.Line) {
 	fmt.Fprintln(out, "# X Y")
 	for i, p := range s.P {
 		for _, pt := range p.PS {
-			fmt.Fprintf(out, "%g %g\n", pt.X, pt.Y)
+			fmt.Fprintf(out, "%.3f %.3f\n", pt.X, -pt.Y)
 		}
-		fmt.Fprintf(out, "%g %g\n", p.PS[0].X, p.PS[0].Y)
+		fmt.Fprintf(out, "%.3f %.3f\n", p.PS[0].X, -p.PS[0].Y)
 		if i != len(s.P)-1 {
 			fmt.Fprintln(out)
 		}
 	}
 	for _, line := range lines {
-		fmt.Fprintf(out, "\n%g %g\n%g %g\n", line.From.X, line.From.Y, line.To.X, line.To.Y)
+		fmt.Fprintf(out, "\n%.3f %.3f\n%.3f %.3f\n", line.From.X, -line.From.Y, line.To.X, -line.To.Y)
 	}
 	fmt.Fprintln(out, "e")
 }
@@ -108,7 +108,6 @@ func main() {
 	}
 
 	if haveUnion {
-		shapes.Union()
 		if *inflate != 0 {
 			for i := range shapes.P {
 				if err := shapes.Inflate(i, *inflate); err != nil {
@@ -116,6 +115,7 @@ func main() {
 				}
 			}
 		}
+		shapes.Union()
 	}
 
 	var lines []polygon.Line
@@ -142,7 +142,7 @@ func main() {
 		if err := svgpoly.SVG(shapes, out, *scribe, lines); err != nil {
 			log.Fatalf("Failed to render SVG output: %v", err)
 		}
-	} else {
+	} else if haveUnion {
 		plotData(out, shapes, lines...)
 	}
 }

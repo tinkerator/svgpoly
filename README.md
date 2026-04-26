@@ -29,12 +29,17 @@ Debian: `sudo apt install gnuplot`). Then:
 ```
 $ git clone https://github.com/tinkerator/svgpoly.git
 $ cd svgpoly
-$ go run examples/outline.go -- --svg examples/test.svg --hatch 0.3 | gnuplot -p
+$ go run examples/outline.go --svg examples/test.svg --hatch 0.3 | gnuplot -p
 ```
 
 Which should render this processed (union) image:
 
 <img src="with-union-hatched.png" width="80%" alt="polygon outlines of shapes with hatch fill"/>
+
+- **Note** how this output is visually oriented the same as the input
+  `examples/test.svg` but to conform to gnuplot conventions, we've
+  negated the Y axis values relative to the _down the page_ SVG Y axis
+  conventions.
 
 This example is more faithful to the raw input SVG image in terms of
 the overlapping polygons.
@@ -51,7 +56,7 @@ We can inflate the polygons by the value specified with the
 `--inflate` option.
 
 ```
-$ go run examples/outline.go --svg examples/test.svg --before --inflate 0.3 | gnuplot -p
+$ go run examples/outline.go --svg examples/test.svg --before --inflate 0.2 | gnuplot -p
 ```
 
 Which should render this image:
@@ -60,7 +65,9 @@ Which should render this image:
 
 Finally, you can output `*polygons.Shapes` in the form of an SVG. The
 SVG follows the conventions that `.Hole`s appear white and
-non-`.Hole`s as blue:
+non-`.Hole`s as blue. A red line is used to identify the outside of a
+hole shape (or, said another way, the inner edge of a solid
+shape-ring):
 
 ```
 $ go run examples/outline.go --svg examples/test.svg --osvg output.svg --hatch 0.3
@@ -70,16 +77,12 @@ Which renders as follows:
 
 <img src="ref-output.svg" width="80%" alt="Inflated union with hatch"/>
 
-Note how this output is currently flipped vertically from the
-`gnuplot` output. This SVG output is faithful to the input format. The
-`gnuplot` output is not. This is because the native input data is from
-an SVG which has the opposite Y coordinate direction as `gnuplot`.
-
-Another example is provided to visualize how the
+The `example/inflate.go` is provided to visualize how the
 [(*polygon.Shapes).Inflate()](https://pkg.go.dev/zappem.net/pub/math/polygon#Shapes.Inflate)
 function works. The basic idea is that the outline of the shape is
 grown by some distance, and where the resulting outline is to be found
-is where lines at that distance intersect. A simple example is this:
+is where lines at that distance intersect. This example program only
+outputs in SVG format. A simple invocation of this code is this:
 
 ```
 $ go run examples/inflate.go --dest inflate.svg
@@ -116,11 +119,6 @@ $ go run examples/inflate.go --dest tight.svg --alpha 70 --beta 70 --mid 10
 
 ## TODO
 
-- Flip the coordinates to render with a consistent orientation as the
-  SVG in gnuplot. KiCad is generating an image with the intended
-  orientation, so gnuplot should honor that. We'll do it by negating
-  the Y coordinates.
-
 - Implement an `--inverse` operation to "fill" where the polygons
   aren't. That is, follow this strategy:
 
@@ -129,8 +127,8 @@ $ go run examples/inflate.go --dest tight.svg --alpha 70 --beta 70 --mid 10
     "holes". Both of these sets of objects are fully preserved in this
     final output.
 
-  - First take the original shapes (ignoring the original holes) and
-    inflate them by `--inflate`.
+  - First take the original shapes from before the first union (there
+    are no holes) and inflate them by `--inflate`.
 
   - Compute the Union of these inflated shapes. Drop any holes from
     this union.
