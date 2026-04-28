@@ -28,6 +28,7 @@ var (
 	inflate = flag.Float64("inflate", 0.0, "inflate outlines by this value")
 	hatch   = flag.Float64("hatch", 0.0, "hatch the polygons with this spacing")
 	hAngle  = flag.Float64("hatch-angle", 45.0, "hatch pattern is at this angle")
+	inverse = flag.Float64("inverse", 0.0, "inverse with this margin if non-zero")
 )
 
 // plotData outputs the polygon data into a gnuplot format.
@@ -65,7 +66,7 @@ func main() {
 
 	haveShapes := *before && shapes != nil && len(shapes.P) != 0
 	haveCuts := cuts != nil && len(cuts.P) != 0
-	haveUnion := *after && shapes != nil && len(shapes.P) != 0
+	haveUnion := (*after || *inverse != 0) && shapes != nil && len(shapes.P) != 0
 
 	var prefix []string
 	if haveShapes {
@@ -75,7 +76,11 @@ func main() {
 		prefix = append(prefix, "'-' with lines title 'cuts'")
 	}
 	if haveUnion {
-		prefix = append(prefix, "'-' with lines title 'union'")
+		if *inverse != 0 {
+			prefix = append(prefix, "'-' with lines title 'inverse'")
+		} else {
+			prefix = append(prefix, "'-' with lines title 'union'")
+		}
 	}
 
 	if len(prefix) == 0 {
@@ -115,7 +120,14 @@ func main() {
 				}
 			}
 		}
-		shapes.Union()
+		if *inverse != 0 {
+			shapes, err = shapes.Negative(*inverse)
+			if err != nil {
+				log.Fatalf("Failed to generate negative: %v", err)
+			}
+		} else {
+			shapes.Union()
+		}
 	}
 
 	var lines []polygon.Line

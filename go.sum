@@ -8,5 +8,5 @@ zappem.net/pub/graphics/svgof v0.5.3 h1:ZieHZSBWP6WknHruP7QP32e+2MmkeaxYBSqj4DAR
 zappem.net/pub/graphics/svgof v0.5.3/go.mod h1:GKUUTS0rjonAAYr0LK7RO4aV42vGg6rxL3DfBKP3Wuc=
 zappem.net/pub/math/geom v0.6.1 h1:1sRrUtBy3MOLllcmgozF3qDRo786KjPjbAo0CBvNKGI=
 zappem.net/pub/math/geom v0.6.1/go.mod h1:J278I+LwpHrPJsQVEGq8AEi6wdAVMrK7VUsvQ+vbGKM=
-zappem.net/pub/math/polygon v0.9.17 h1:VcAdRoDn2ee85YUG8d26YV/hARHyDssBUSxfl/xbdHY=
-zappem.net/pub/math/polygon v0.9.17/go.mod h1:u6/3+TRLWGqqVIgArTaWPpZQDgg4O6YP51AUjjMYUG8=
+zappem.net/pub/math/polygon v0.9.18 h1:NDvPLu1jhI5ja4ZkgQXErMYjAc17DLAm1KvWOnLOLR4=
+zappem.net/pub/math/polygon v0.9.18/go.mod h1:u6/3+TRLWGqqVIgArTaWPpZQDgg4O6YP51AUjjMYUG8=

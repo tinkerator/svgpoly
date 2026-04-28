@@ -77,6 +77,16 @@ Which renders as follows:
 
 <img src="ref-output.svg" width="80%" alt="Inflated union with hatch"/>
 
+The outline example also supports generating a _negative_ of the
+polygons rendered as an SVG or as gnuplot input. To see this, for our
+`examples/test.svg` input, we can do the following:
+
+```
+$ go run examples/outline.go --svg examples/test.svg --osvg negative.svg --hatch .3 --inverse .5 --inflate .1
+```
+
+<img src="ref-negative.svg" width="80%" alt="Negative (with a small inflation)"/>
+
 The `example/inflate.go` is provided to visualize how the
 [(*polygon.Shapes).Inflate()](https://pkg.go.dev/zappem.net/pub/math/polygon#Shapes.Inflate)
 function works. The basic idea is that the outline of the shape is
@@ -119,25 +129,7 @@ $ go run examples/inflate.go --dest tight.svg --alpha 70 --beta 70 --mid 10
 
 ## TODO
 
-- Implement an `--inverse` operation to "fill" where the polygons
-  aren't. That is, follow this strategy:
-
-  - After a Union operation, you have polygons and holes. In the final
-    render these holes will be "solid" and the shapes will be
-    "holes". Both of these sets of objects are fully preserved in this
-    final output.
-
-  - First take the original shapes from before the first union (there
-    are no holes) and inflate them by `--inflate`.
-
-  - Compute the Union of these inflated shapes. Drop any holes from
-    this union.
-
-  - Add back in the shapes from the original union as holes, and holes
-    from the original union in the form of shapes.
-
-  - By construction nothing can partially overlap. So, all that
-    remains is to sort the shapes to be left to right bottom to top.
+Nothing planned.
 
 ## License info
 
