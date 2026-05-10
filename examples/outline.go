@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -19,8 +20,10 @@ import (
 
 var (
 	src     = flag.String("svg", "", "input SVG file")
+	poly    = flag.String("poly", "", "input json polygon.Shapes")
 	dest    = flag.String("dest", "", "output gnuplot script filename")
 	oSVG    = flag.String("osvg", "", "output representation in SVG format")
+	oPoly   = flag.String("opoly", "", "output representation of polygons.Shapes in json")
 	debug   = flag.Bool("debug", false, "enable more debugging output")
 	before  = flag.Bool("before", false, "show polygons before creating union")
 	after   = flag.Bool("after", true, "show polygons after creating union")
@@ -59,7 +62,21 @@ func main() {
 
 	// shapes are closed (filled) polygons.
 	// cuts are outlines with no substance.
-	shapes, cuts, err := svgpoly.LoadSVG(*src, *scribe)
+	var shapes, cuts *polygon.Shapes
+	var err error
+	if *poly != "" {
+		var d []byte
+		d, err = os.ReadFile(*poly)
+		var objects polygon.Shapes
+		if err == nil {
+			err = json.Unmarshal(d, &objects)
+			if err == nil {
+				shapes = &objects
+			}
+		}
+	} else {
+		shapes, cuts, err = svgpoly.LoadSVG(*src, *scribe)
+	}
 	if err != nil {
 		log.Fatalf("Failed to load --svg=%q: %v", *src, err)
 	}
@@ -88,10 +105,10 @@ func main() {
 	}
 
 	out := os.Stdout
-	if *dest != "" {
-		out, err = os.Create(*dest)
+	if *oPoly != "" {
+		out, err = os.Create(*oPoly)
 		if err != nil {
-			log.Fatalf("Unable to generate output %q: %v", *dest, err)
+			log.Fatalf("Unable to generate polygon.Shapes output %q: %v", *oPoly, err)
 		}
 		defer out.Close()
 	} else if *oSVG != "" {
@@ -100,9 +117,15 @@ func main() {
 			log.Fatalf("Unable to generate SVG output %q: %v", *oSVG, err)
 		}
 		defer out.Close()
+	} else if *dest != "" {
+		out, err = os.Create(*dest)
+		if err != nil {
+			log.Fatalf("Unable to generate output %q: %v", *dest, err)
+		}
+		defer out.Close()
 	}
 
-	if *oSVG == "" {
+	if *oSVG == "" && *oPoly == "" {
 		fmt.Fprintf(out, "plot %s\n", strings.Join(prefix, ", \\\n     "))
 		if haveShapes {
 			plotData(out, shapes)
@@ -128,6 +151,14 @@ func main() {
 		} else {
 			shapes.Union()
 		}
+	}
+
+	if *oPoly != "" {
+		enc := json.NewEncoder(out)
+		if err := enc.Encode(shapes); err != nil {
+			log.Fatalf("failed to json encode %q: %v", *oPoly, err)
+		}
+		return
 	}
 
 	var lines []polygon.Line

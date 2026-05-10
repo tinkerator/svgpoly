@@ -9,7 +9,7 @@ an SVG file input into to a collection of such polygons, and the
 reverse process.
 
 The primary use case is digesting SVG files from KiCad and automating
-the outline generation of overlapping polygons. The package can import
+the outline generation from overlapping polygons. The package can import
 SVGs using [`svger`](https://zappem.net/pub/graphics/svger/) and
 output in SVG format via
 [`svgof`](https://zappem.net/pub/graphics/svgof/).
@@ -86,6 +86,12 @@ $ go run examples/outline.go --svg examples/test.svg --osvg negative.svg --hatch
 ```
 
 <img src="ref-negative.svg" width="80%" alt="Negative (with a small inflation)"/>
+
+The `outline` program can also input and output
+[`polygon.Shapes`](https://pkg.go.dev/zappem.net/pub/math/polygon#Shapes)
+in JSON format using the `--poly <in.json>` and `--opoly <out.json>`
+command line options. This can be useful when debugging polygon
+manipulation code.
 
 The `example/inflate.go` is provided to visualize how the
 [(*polygon.Shapes).Inflate()](https://pkg.go.dev/zappem.net/pub/math/polygon#Shapes.Inflate)
