@@ -24,6 +24,7 @@ var (
 	dest    = flag.String("dest", "", "output gnuplot script filename")
 	oSVG    = flag.String("osvg", "", "output representation in SVG format")
 	oPoly   = flag.String("opoly", "", "output representation of polygons.Shapes in json")
+	flip    = flag.Bool("flip", true, "negate Y values when processing SVGs to/from polygons")
 	debug   = flag.Bool("debug", false, "enable more debugging output")
 	before  = flag.Bool("before", false, "show polygons before creating union")
 	after   = flag.Bool("after", true, "show polygons after creating union")
@@ -42,15 +43,15 @@ func plotData(out io.Writer, s *polygon.Shapes, lines ...polygon.Line) {
 	fmt.Fprintln(out, "# X Y")
 	for i, p := range s.P {
 		for _, pt := range p.PS {
-			fmt.Fprintf(out, "%.3f %.3f\n", pt.X, -pt.Y)
+			fmt.Fprintf(out, "%.3f %.3f\n", pt.X, pt.Y)
 		}
-		fmt.Fprintf(out, "%.3f %.3f\n", p.PS[0].X, -p.PS[0].Y)
+		fmt.Fprintf(out, "%.3f %.3f\n", p.PS[0].X, p.PS[0].Y)
 		if i != len(s.P)-1 {
 			fmt.Fprintln(out)
 		}
 	}
 	for _, line := range lines {
-		fmt.Fprintf(out, "\n%.3f %.3f\n%.3f %.3f\n", line.From.X, -line.From.Y, line.To.X, -line.To.Y)
+		fmt.Fprintf(out, "\n%.3f %.3f\n%.3f %.3f\n", line.From.X, line.From.Y, line.To.X, line.To.Y)
 	}
 	fmt.Fprintln(out, "e")
 }
@@ -76,6 +77,10 @@ func main() {
 		}
 	} else {
 		shapes, cuts, err = svgpoly.LoadSVG(*src, *scribe)
+		if *flip {
+			shapes = svgpoly.Flip(shapes)
+			cuts = svgpoly.Flip(cuts)
+		}
 	}
 	if err != nil {
 		log.Fatalf("Failed to load --svg=%q: %v", *src, err)
@@ -182,6 +187,13 @@ func main() {
 	}
 
 	if *oSVG != "" {
+		if *flip {
+			for i := range lines {
+				lines[i].From.Y *= -1
+				lines[i].To.Y *= -1
+			}
+			shapes = svgpoly.Flip(shapes)
+		}
 		if err := svgpoly.SVG(shapes, out, *scribe, lines); err != nil {
 			log.Fatalf("Failed to render SVG output: %v", err)
 		}

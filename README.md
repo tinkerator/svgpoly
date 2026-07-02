@@ -37,23 +37,28 @@ Which should render this processed (union) image:
 <img src="with-union-hatched.png" width="80%" alt="polygon outlines of shapes with hatch fill"/>
 
 - **Note** how this output is visually oriented the same as the input
-  `examples/test.svg` but to conform to gnuplot conventions, we've
-  negated the Y axis values relative to the _down the page_ SVG Y axis
-  conventions.
+  `examples/test.svg` but to conform to polygon and gnuplot
+  conventions, we've negated the Y axis values relative to the _down
+  the page_ SVG Y axis conventions.
+
+- In general this program performs all of its internal operations via
+  `polygon` code conventions and only translates to SVG conventions at
+  time of import and output.
 
 This example is more faithful to the raw input SVG image in terms of
-the overlapping polygons.
+the overlapping polygons it contains:
 
 ```
 $ go run examples/outline.go --svg examples/test.svg --before --after=false | gnuplot -p
 ```
 
-Which should render this image:
+which should render this image:
 
 <img src="before-not-after.png" width="80%" alt="More raw SVG input"/>
 
 We can inflate the polygons by the value specified with the
-`--inflate` option.
+`--inflate` option. (See the `inflate.go` examples below for a
+visualization of how inflate works under the covers.)
 
 ```
 $ go run examples/outline.go --svg examples/test.svg --before --inflate 0.2 | gnuplot -p

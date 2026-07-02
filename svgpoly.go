@@ -140,3 +140,24 @@ func LoadSVG(path string, scribe float64, colors ...string) (shapes, cuts *polyg
 	shapes, cuts, err = trace(dis, scribe)
 	return
 }
+
+// Flip negates all Y coordinates of a set of Shapes but preserves the
+// Hole property of each shape. Negating the Y axis alone would
+// ordinarily invert the clockwise or not nature of a Shape, so to
+// preserve the Hole property of each Shape, the order of each of the
+// flipped points is reversed.
+func Flip(shapes *polygon.Shapes) *polygon.Shapes {
+	if shapes == nil {
+		return nil
+	}
+	var flipped *polygon.Shapes
+	for i, s := range shapes.P {
+		var pts []polygon.Point
+		for _, pt := range s.PS {
+			pts = append(pts, polygon.Point{pt.X, -pt.Y})
+		}
+		flipped = flipped.Builder(pts...)
+		flipped.Invert(i)
+	}
+	return flipped
+}
