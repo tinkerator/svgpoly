@@ -3,10 +3,10 @@ module zappem.net/pub/graphics/svgpoly
 go 1.25.5
 
 require (
-	zappem.net/pub/graphics/polymark v0.6.10
+	zappem.net/pub/graphics/polymark v0.7.2
 	zappem.net/pub/graphics/svger v0.3.2
 	zappem.net/pub/graphics/svgof v0.5.3
-	zappem.net/pub/math/polygon v0.9.19
+	zappem.net/pub/math/polygon v0.9.21
 )
 
 require (

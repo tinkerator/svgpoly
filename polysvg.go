@@ -31,6 +31,18 @@ func max(as ...float64) (ans float64) {
 	return
 }
 
+// OutlineColor, ShapColor, InlineColor, HoleColor, HatchColor,
+// BackingColor are all of the color options for the SVG() function to
+// use.
+var (
+	OutlineColor = "blue"
+	ShapeColor   = "cyan"
+	InlineColor  = "red"
+	HoleColor    = "white"
+	HatchColor   = "green"
+	BackingColor = HoleColor
+)
+
 // SVG generates a stylized SVG from the *polygon.Shapes, p. The color
 // choice is "blue" outlines polygons that are filled with "cyan", and
 // holes are outlined in "red" and filled with "white".
@@ -48,7 +60,7 @@ func SVG(p *polygon.Shapes, out io.Writer, scribe float64, lines []polygon.Line)
 	canvas.Decimals = 3
 
 	canvas.StartviewUnit(tr.X-ll.X, tr.Y-ll.Y, "mm", ll.X, ll.Y, tr.X-ll.X, tr.Y-ll.Y)
-	canvas.Rect(ll.X, ll.Y, tr.X-ll.X, tr.Y-ll.Y, `fill="white"`)
+	canvas.Rect(ll.X, ll.Y, tr.X-ll.X, tr.Y-ll.Y, fmt.Sprintf(`fill=%q`, BackingColor))
 
 	for _, s := range p.P {
 		xs := []float64{s.PS[len(s.PS)-1].X}
@@ -58,15 +70,15 @@ func SVG(p *polygon.Shapes, out io.Writer, scribe float64, lines []polygon.Line)
 			ys = append(ys, pt.Y)
 		}
 		if s.Hole {
-			canvas.Polyline(xs, ys, fmt.Sprintf(`fill="white" stroke="red" stroke-width="%.3f"`, scribe))
+			canvas.Polyline(xs, ys, fmt.Sprintf(`fill=%q stroke=%q stroke-width="%.3f"`, HoleColor, InlineColor, scribe))
 		} else {
-			canvas.Polyline(xs, ys, fmt.Sprintf(`fill="cyan" stroke="blue" stroke-width="%.3f"`, scribe))
+			canvas.Polyline(xs, ys, fmt.Sprintf(`fill=%q stroke=%q stroke-width="%.3f"`, ShapeColor, OutlineColor, scribe))
 		}
 	}
 	for _, line := range lines {
 		xs := []float64{line.From.X, line.To.X}
 		ys := []float64{line.From.Y, line.To.Y}
-		canvas.Polyline(xs, ys, fmt.Sprintf(`fill="none" stroke="green" stroke-width="%.3f"`, scribe))
+		canvas.Polyline(xs, ys, fmt.Sprintf(`fill="none" stroke=%q stroke-width="%.3f"`, HatchColor, scribe))
 	}
 	canvas.End()
 

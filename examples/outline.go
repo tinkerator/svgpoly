@@ -11,6 +11,8 @@ import (
 	"log"
 	"math"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 
 	"zappem.net/pub/graphics/svger"
@@ -19,20 +21,27 @@ import (
 )
 
 var (
-	src     = flag.String("svg", "", "input SVG file")
-	poly    = flag.String("poly", "", "input json polygon.Shapes")
-	dest    = flag.String("dest", "", "output gnuplot script filename")
-	oSVG    = flag.String("osvg", "", "output representation in SVG format")
-	oPoly   = flag.String("opoly", "", "output representation of polygons.Shapes in json")
-	flip    = flag.Bool("flip", true, "negate Y values when processing SVGs to/from polygons")
-	debug   = flag.Bool("debug", false, "enable more debugging output")
-	before  = flag.Bool("before", false, "show polygons before creating union")
-	after   = flag.Bool("after", true, "show polygons after creating union")
-	scribe  = flag.Float64("scribe", 0.1, "pen scribing size (for rounding circles and --osvg)")
-	inflate = flag.Float64("inflate", 0.0, "inflate outlines by this value")
-	hatch   = flag.Float64("hatch", 0.0, "hatch the polygons with this spacing")
-	hAngle  = flag.Float64("hatch-angle", 45.0, "hatch pattern is at this angle")
-	inverse = flag.Float64("inverse", 0.0, "inverse with this margin if non-zero")
+	src      = flag.String("svg", "", "input SVG file")
+	poly     = flag.String("poly", "", "input json polygon.Shapes")
+	dest     = flag.String("dest", "", "output gnuplot script filename")
+	oSVG     = flag.String("osvg", "", "output representation in SVG format")
+	oPoly    = flag.String("opoly", "", "output representation of polygons.Shapes in json")
+	drop     = flag.String("drop", "", "non-empty is comma list of pre-merge polygon indices to keep")
+	flip     = flag.Bool("flip", true, "negate Y values when processing SVGs to/from polygons")
+	debug    = flag.Bool("debug", false, "enable more debugging output")
+	before   = flag.Bool("before", false, "show polygons before creating union")
+	after    = flag.Bool("after", true, "show polygons after creating union")
+	scribe   = flag.Float64("scribe", 0.02, "pen scribing size (for rounding circles and --osvg)")
+	inflate  = flag.Float64("inflate", 0.0, "inflate outlines by this value")
+	hatch    = flag.Float64("hatch", 0.0, "hatch the polygons with this spacing")
+	hAngle   = flag.Float64("hatch-angle", 45.0, "hatch pattern is at this angle")
+	inverse  = flag.Float64("inverse", 0.0, "inverse with this margin if non-zero")
+	outline  = flag.String("outline", "", "outline color override")
+	inline   = flag.String("inline", "", "inline color override")
+	backing  = flag.String("backing", "", "backing color override")
+	hatching = flag.String("hatching", "", "hatching color override")
+	fill     = flag.String("fill", "", "shape fill color override")
+	hole     = flag.String("hole", "", "hole fill color override")
 )
 
 // plotData outputs the polygon data into a gnuplot format.
@@ -86,9 +95,31 @@ func main() {
 		log.Fatalf("Failed to load --svg=%q: %v", *src, err)
 	}
 
+	if *drop != "" {
+		var prune []int
+		for _, v := range strings.Split(*drop, ",") {
+			x, err := strconv.Atoi(v)
+			if err != nil {
+				log.Fatalf("--drop=...%q... ?: %v", v, err)
+			}
+			if x < 0 || x >= len(shapes.P) {
+				log.Fatalf("--drop=...%d... out of range [%d,%d)", x, 0, len(shapes.P))
+			}
+			prune = append(prune, x)
+		}
+		sort.Slice(prune, func(a, b int) bool { return prune[a] > prune[b] })
+		for _, x := range prune {
+			if x >= len(shapes.P) {
+				log.Fatalf("duplicated index in --drop=...%d...%d", x, x)
+			}
+			shapes.P = append(shapes.P[:x], shapes.P[x+1:]...)
+		}
+	}
+
 	haveShapes := *before && shapes != nil && len(shapes.P) != 0
 	haveCuts := cuts != nil && len(cuts.P) != 0
-	haveUnion := (*after || *inverse != 0) && shapes != nil && len(shapes.P) != 0
+	haveUnion := *after && shapes != nil && len(shapes.P) != 0
+	haveInverse := *inverse != 0 && shapes != nil && len(shapes.P) != 0
 
 	var prefix []string
 	if haveShapes {
@@ -97,12 +128,10 @@ func main() {
 	if haveCuts {
 		prefix = append(prefix, "'-' with lines title 'cuts'")
 	}
-	if haveUnion {
-		if *inverse != 0 {
-			prefix = append(prefix, "'-' with lines title 'inverse'")
-		} else {
-			prefix = append(prefix, "'-' with lines title 'union'")
-		}
+	if haveInverse {
+		prefix = append(prefix, "'-' with lines title 'inverse'")
+	} else if haveUnion {
+		prefix = append(prefix, "'-' with lines title 'union'")
 	}
 
 	if len(prefix) == 0 {
@@ -140,21 +169,20 @@ func main() {
 		}
 	}
 
-	if haveUnion {
-		if *inflate != 0 {
-			for i := range shapes.P {
-				if err := shapes.Inflate(i, *inflate); err != nil {
-					log.Fatalf("Failed to inflate shape %d: %v", i, err)
-				}
+	if *inflate != 0 {
+		for i := range shapes.P {
+			if err := shapes.Inflate(i, *inflate); err != nil {
+				log.Fatalf("Failed to inflate shape %d: %v", i, err)
 			}
 		}
-		if *inverse != 0 {
-			shapes, err = shapes.Negative(*inverse)
-			if err != nil {
-				log.Fatalf("Failed to generate negative: %v", err)
-			}
-		} else {
-			shapes.Union()
+	}
+	if haveUnion {
+		shapes.Union()
+	}
+	if haveInverse {
+		shapes, err = shapes.Negative(*inverse)
+		if err != nil {
+			log.Fatalf("Failed to generate negative: %v", err)
 		}
 	}
 
@@ -193,6 +221,24 @@ func main() {
 				lines[i].To.Y *= -1
 			}
 			shapes = svgpoly.Flip(shapes)
+		}
+		if *outline != "" {
+			svgpoly.OutlineColor = *outline
+		}
+		if *inline != "" {
+			svgpoly.InlineColor = *inline
+		}
+		if *backing != "" {
+			svgpoly.BackingColor = *backing
+		}
+		if *hatching != "" {
+			svgpoly.HatchColor = *hatching
+		}
+		if *fill != "" {
+			svgpoly.ShapeColor = *fill
+		}
+		if *hole != "" {
+			svgpoly.HoleColor = *hole
 		}
 		if err := svgpoly.SVG(shapes, out, *scribe, lines); err != nil {
 			log.Fatalf("Failed to render SVG output: %v", err)
