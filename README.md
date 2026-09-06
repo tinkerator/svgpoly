@@ -140,7 +140,11 @@ $ go run examples/inflate.go --dest tight.svg --alpha 70 --beta 70 --mid 10
 
 ## TODO
 
-Nothing planned.
+- This generates an unsatisfactory inflation, so fix it:
+
+```
+$ go run examples/inflate.go --inflate 90 -alpha 80 --beta -20 > tmp.svg && inkview tmp.svg
+```
 
 ## License info
 

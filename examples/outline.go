@@ -107,11 +107,18 @@ func main() {
 			}
 			prune = append(prune, x)
 		}
-		sort.Slice(prune, func(a, b int) bool { return prune[a] > prune[b] })
+		sort.Slice(prune, func(a, b int) bool {
+			return prune[a] > prune[b]
+		})
+		last := -1
 		for _, x := range prune {
-			if x >= len(shapes.P) {
+			if x == last {
 				log.Fatalf("duplicated index in --drop=...%d...%d", x, x)
 			}
+			if x < 0 || x >= len(shapes.P) {
+				log.Fatalf("--drop=...%d... out of range", x)
+			}
+			last = x
 			shapes.P = append(shapes.P[:x], shapes.P[x+1:]...)
 		}
 	}
